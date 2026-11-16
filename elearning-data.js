@@ -7,7 +7,7 @@
    ============================================================ */
 
 // URL Web App Google Apps Script (guna fail Code.gs yang disediakan)
-const API_URL='https://script.google.com/macros/s/AKfycbxyRhWFjW1o54xVgGHAzEgOmC0T0VxrT1VioXrhNST1zeHZoG5ytTzvOFpQnjQ6ifQA6A/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbwUia7pqQtAs4pVVEeuFsvMtxQAS56yFNpmCXbpsNm38FPVBWFkarWSbjjcqw-B5ww34g/exec';
 const K='elearn_db';                 // kunci localStorage untuk semua data
 const RESET_KEY='elearn_admin_reset_v1'; // penanda: reset admin sudah dibuat (sekali sahaja)
 
