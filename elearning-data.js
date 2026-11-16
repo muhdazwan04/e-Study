@@ -46,16 +46,19 @@ function badge(){let b=document.getElementById('syncb');if(!b){if(!document.body
  b.textContent=syncState=='ok'?(dirty||pushing?'☁️ Menyimpan...':'☁️ Disegerak'):syncState=='wait'?'☁️ Menyambung...':'⚠️ Luar talian (data setempat)';b.style.color=syncState=='off'?'#b45309':'#065f46'}
 // Gabung data: item sama id -> versi setempat menang; item pelayan sahaja dikekalkan
 function mergeDB(r,l){const o={...r},id=x=>x&&x.id!=null?x.id:JSON.stringify(x);for(const k in l){const a=l[k],b=r[k];if(Array.isArray(a)&&Array.isArray(b)){const m=new Map();b.forEach(x=>m.set(id(x),x));a.forEach(x=>m.set(id(x),x));o[k]=[...m.values()]}else if(k=='seq')o[k]=Math.max(+a||0,+b||0);else if(!(k in r))o[k]=a}return o}
-function setLocal(d){try{localStorage.setItem(K,JSON.stringify(d))}catch{}db=load();window.dispatchEvent(new Event('storage'))}
+function setLocal(d){try{localStorage.setItem(K,JSON.stringify(d))}catch{}db=load();window.dispatchEvent(new Event('storage'));if(inChat()&&typeof paint=='function'&&document.getElementById('msgs')){try{paint()}catch{}}}
+let pulling=false;
 async function pull(first){
-  if(!first&&(dirty||pushing))return;
+  if(pulling||(!first&&(dirty||pushing)))return;
+  pulling=true;
   try{const r=await apiGet(first?0:rev);if(!r.ok)throw 0;
     if(r.same){syncState='ok';badge();return}
     if(r.data){rev=r.rev;setLocal(r.data);syncState='ok'}
     else{rev=r.rev;syncState='ok';dirty=true;push()}   // pelayan kosong -> hantar data setempat
   }catch{if(first)syncState='off'}
-  badge()}
-function schedulePush(){if(syncState!='ok')return;ver++;dirty=true;badge();clearTimeout(pushT);pushT=setTimeout(push,700)}
+  pulling=false;badge()}
+const inChat=()=>typeof S!='undefined'&&S.page=='chat';
+function schedulePush(){if(syncState!='ok')return;ver++;dirty=true;badge();clearTimeout(pushT);pushT=setTimeout(push,inChat()?80:700)}   // chat: hantar hampir serta-merta
 async function push(){
   if(pushing){clearTimeout(pushT);pushT=setTimeout(push,500);return}
   pushing=true;badge();const v=ver;
@@ -67,7 +70,9 @@ async function push(){
   pushing=false;badge();if(dirty&&v!=ver){clearTimeout(pushT);pushT=setTimeout(push,300)}}
 addEventListener('online',()=>{if(syncState=='off')pull(true)});
 addEventListener('DOMContentLoaded',badge);
-setInterval(()=>{if(!document.hidden){syncState=='off'?pull(true):pull(false)}},5000);
+let tick=0;
+setInterval(()=>{tick++;if(document.hidden)return;if(!inChat()&&tick%3)return;   // chat: setiap 1.5 saat, lain: ~4.5 saat
+  syncState=='off'?pull(true):pull(false)},1500);
 
 // ===== Mula: ada data lama -> reset admin sekali sahaja; tiada data -> seed baharu =====
 let db=load();
