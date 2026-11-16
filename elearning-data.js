@@ -70,8 +70,8 @@ async function push(){
   pushing=false;badge();if(dirty&&v!=ver){clearTimeout(pushT);pushT=setTimeout(push,300)}}
 addEventListener('online',()=>{if(syncState=='off')pull(true)});
 addEventListener('DOMContentLoaded',badge);
-let tick=0;
-setInterval(()=>{tick++;if(document.hidden)return;if(!inChat()&&tick%3)return;   // chat: setiap 1.5 saat, lain: ~4.5 saat
+let syncTick=0;
+setInterval(()=>{syncTick++;if(document.hidden)return;if(!inChat()&&syncTick%3)return;   // chat: setiap 1.5 saat, lain: ~4.5 saat
   syncState=='off'?pull(true):pull(false)},1500);
 
 // ===== Mula: ada data lama -> reset admin sekali sahaja; tiada data -> seed baharu =====
