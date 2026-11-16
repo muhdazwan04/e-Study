@@ -126,30 +126,15 @@ table tr{animation:up .4s both}table tr:nth-child(2){animation-delay:.04s}table 
 .rall{max-height:55vh;overflow:auto}.rall .cn{font-size:12px;color:var(--sm);font-weight:600;margin:8px 0 2px}.rall span{display:inline-block;font-size:26px;cursor:pointer;padding:3px;border-radius:6px;transition:.15s}.rall span:hover{background:#eef2f7;transform:scale(1.25)}
 @media(max-width:800px){#sb{transform:translateX(-100%)}#sb.open{transform:none}#mn{margin:0}.top{display:block}.chat{grid-template-columns:1fr}main{padding:14px}#ch small{max-width:40vw}}
 </style></head><body><div id="app"></div>
+<script src="elearning-data.js"></script>
 <script>
-const K='elearn_db',$=s=>document.querySelector(s),app=$('#app');
-// Hash ringkas (cyrb53) - bukan keselamatan sebenar, hanya supaya password tidak terpapar terus
-const hash=s=>{let a=0xdeadbeef,b=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^a>>>16,2246822507)^Math.imul(b^b>>>13,3266489909);b=Math.imul(b^b>>>16,2246822507)^Math.imul(a^a>>>13,3266489909);return(4294967296*(2097151&b)+(a>>>0)).toString(36)};
-const now=()=>new Date().toLocaleString('sv').slice(0,16);
+const $=s=>document.querySelector(s),app=$('#app');
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const load=()=>{const d=JSON.parse(localStorage.getItem(K)||'null');if(d){d.bukti=d.bukti||[];d.groups=d.groups||[];d.latihan=d.latihan||[];d.hantaran=d.hantaran||[]}return d};
-const persist=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch{toast('Storan penuh! Guna gambar/fail lebih kecil','err')}};
-// ===== SEED: 1 admin default (username: admin, password: admin123) =====
-let db=load()||{users:[{id:1,username:'admin',password:hash('admin123'),role:'admin',nama:'Administrator',nis:'',kelas:'',created_at:now()}],subjects:[],books:[],notes:[],quizzes:[],questions:[],results:[],bukti:[],messages:[],groups:[],latihan:[],hantaran:[],seq:1};persist();
-const mut=f=>{db=load();const r=f();persist();return r};
-const nid=()=>++db.seq;
 let S={uid:+sessionStorage.getItem('uid')||0,page:'',arg:null},T;
 const U=()=>db.users.find(u=>u.id==S.uid);
 const sub=i=>(db.subjects.find(s=>s.id==i)||{}).nama||'-';
 const usr=i=>(db.users.find(u=>u.id==i)||{}).nama||'-';
 function toast(m,t){const d=document.createElement('div');d.className='toast '+(t||'');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2800)}
-// ===== Storan fail: IndexedDB (aplikasi tidak letak had saiz) =====
-const idb=()=>new Promise((r,j)=>{const q=indexedDB.open('elearn_files',1);q.onupgradeneeded=()=>q.result.createObjectStore('f');q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
-const fput=async(id,b)=>{const d=await idb();return new Promise((r,j)=>{const t=d.transaction('f','readwrite');t.objectStore('f').put(b,id);t.oncomplete=r;t.onerror=t.onabort=()=>j(t.error)})};
-const fget=async id=>{const d=await idb();return new Promise((r,j)=>{const q=d.transaction('f').objectStore('f').get(id);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)})};
-async function gc(){try{const d=await idb(),x=load(),used=new Set([...x.books,...x.notes,...x.bukti,...x.latihan,...x.hantaran,...x.messages.filter(m=>m.media).map(m=>({file_ref:m.media.ref}))].map(r=>r.file_ref).filter(Boolean));
- const ks=await new Promise(r=>{const q=d.transaction('f').objectStore('f').getAllKeys();q.onsuccess=()=>r(q.result)});
- const t=d.transaction('f','readwrite');ks.filter(k=>!used.has(k)&&Date.now()-parseInt(k.slice(1,14))>60000).forEach(k=>t.objectStore('f').delete(k))}catch{}}
 async function openB(t,i){const r=db[t].find(x=>x.id==i);
  if(r.file_ref){const w=window.open('','_blank');try{const b=await fget(r.file_ref);if(!b)throw 0;w.location=URL.createObjectURL(b)}catch{w.close();toast('Fail tidak dijumpai di pelayar ini','err')}return}
  let u=r.file_url;if(!u)return;
@@ -242,7 +227,7 @@ const resetPw=i=>{if(U().role!='admin')return;form('Reset password: '+e(usr(i)),
 function akun(){form('Ubah akaun admin',[{k:'lama',l:'Password semasa',t:'password',r:1},{k:'username',l:'Username baru (pilihan)'},{k:'baru',l:'Password baru',t:'password',r:1}],{username:U().username},v=>{
  if(hash(v.lama)!==U().password){toast('Password semasa salah','err');return false}
  if(v.baru.length<6){toast('Password minimum 6 aksara','err');return false}
- mut(()=>{const u=db.users.find(x=>x.id==S.uid);u.password=hash(v.baru);if(v.username)u.username=v.username});toast('Akaun dikemas kini')})}
+ mut(()=>{const u=db.users.find(x=>x.id==S.uid);u.password=hash(v.baru);delete u.must_change;if(v.username)u.username=v.username});toast('Akaun dikemas kini')})}
 // ===== Helpers UI =====
 const head=(t,x='')=>`<div class=hd><h2>${t}</h2><div>${x}</div></div>`;
 const tbl=(h,r)=>`<div class=tw><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan=${h.length} class=sm>Belum ada data.</td></tr>`}</table></div>`;
@@ -448,12 +433,22 @@ const MT=[['home','🏠 Utama'],['subject','📚 Subject'],['pelajarku','👥 Pe
 const menu=u=>u.role=='admin'?MA:u.role=='pelajar'?MP:MT.filter(m=>can(m[0]));
 const home=u=>'home';
 const lgRole=r=>{document.body.className=r.value;r.form.user.placeholder=r.value=='pelajar'?'Username / NIS':'Username'};
-function login(ev){ev.preventDefault();db=load();const f=ev.target,u=db.users.find(x=>x.role==f.role.value&&(x.username==f.user.value||(x.nis&&x.nis==f.user.value)));
+function login(ev){ev.preventDefault();if(typeof syncReady=='function'&&!syncReady())return toast('Sedang menyambung ke pelayan, cuba sebentar lagi','err');db=load();const f=ev.target,u=db.users.find(x=>x.role==f.role.value&&(x.username==f.user.value||(x.nis&&x.nis==f.user.value)));
  if(!u||u.password!==hash(f.pw.value))return toast('Username/NIS atau password salah','err');
  S.uid=u.id;sessionStorage.setItem('uid',u.id);go(home(u))}
+// ===== Wajib tukar password/username selepas reset (log masuk pertama) =====
+const pwForce=u=>`<div id=login><div class=bgfx><i></i><i></i><i></i><i></i></div><div class="card lg"><div class=logo>🔐</div><h2 class=ttl>Tukar password</h2><p class="sm tg">Akaun anda baru direset. Sila tetapkan password baharu sebelum meneruskan.</p><form onsubmit="savePw(event)"><label>Username baru (pilihan)<input name=nu value="${e(u.username)}" autocomplete=username></label><label>Password baru<input name=p1 type=password minlength=8 required autofocus autocomplete=new-password></label><label>Sahkan password baru<input name=p2 type=password minlength=8 required autocomplete=new-password></label><p class=sm>Minimum 8 aksara dan mesti berbeza daripada password lalai.</p><button class="btn go">Simpan & masuk →</button><button type=button class="btn gr" style="width:100%;margin-top:8px" onclick=logout()>Batal / Logout</button></form></div></div>`;
+function savePw(ev){ev.preventDefault();const f=ev.target,p=f.p1.value,nu=f.nu.value.trim();
+ if(p.length<8)return toast('Password minimum 8 aksara','err');
+ if(p!==f.p2.value)return toast('Pengesahan password tidak sama','err');
+ if(p===ADMIN_DEFAULT.password)return toast('Password mesti berbeza daripada password lalai','err');
+ if(nu&&db.users.some(x=>x.id!=S.uid&&x.username==nu))return toast('Username sudah digunakan','err');
+ mut(()=>{const u=db.users.find(x=>x.id==S.uid);u.password=hash(p);if(nu)u.username=nu;delete u.must_change});
+ toast('Password berjaya ditukar');go(home(U()))}
 function logout(){recStop(0);clearInterval(T);S={uid:0,page:'',arg:null};sessionStorage.removeItem('uid');render()}
 function go(p,a){recStop(0);S.page=p;S.arg=a;S.last='';S.lp=0;S.pp=null;render();scrollTo(0,0)}
 function render(){clearInterval(T);db=load()||db;const u=U();S.last='';
+ if(u&&u.must_change){document.body.className=u.role;app.innerHTML=pwForce(u);return}
  if(!u){document.body.className='pelajar';app.innerHTML=`<div id=login><div class=bgfx><i></i><i></i><i></i><i></i></div><div class=fl><span>📚</span><span>✏️</span><span>🎓</span><span>💡</span><span>🧠</span><span>🔬</span><span>🏆</span><span>📝</span></div><div class="card lg"><div class=logo>🎓</div><h2 class=ttl>E-Learning</h2><p class="sm tg">Belajar lebih pintar, di mana sahaja ✨</p><form onsubmit="login(event)"><div class=seg><label><input type=radio name=role value=pelajar checked onchange="lgRole(this)"><span>🎒 Pelajar</span></label><label><input type=radio name=role value=tutor onchange="lgRole(this)"><span>🧑‍🏫 Tutor</span></label><label><input type=radio name=role value=admin onchange="lgRole(this)"><span>🛡️ Admin</span></label></div><label>Username / NIS<input name=user placeholder="Username / NIS" required autofocus autocomplete=username></label><label>Password<input name=pw type=password required autocomplete=current-password></label><button class="btn go">Masuk →</button></form><p class=sm style="text-align:center;margin:14px 0 0">Pelajar dan tutor tidak boleh mendaftar sendiri. Hubungi admin untuk akaun.</p></div></div>`;return}
  document.body.className=u.role;if(!S.page||!can(S.page)){S.page=home(u);S.arg=null}
  const M=menu(u);
