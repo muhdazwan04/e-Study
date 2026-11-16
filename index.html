@@ -125,7 +125,8 @@ table tr{animation:up .4s both}table tr:nth-child(2){animation-delay:.04s}table 
 .rpop{position:fixed;z-index:60;display:flex;gap:2px;background:#fff;border-radius:26px;padding:6px 8px;box-shadow:0 8px 28px rgba(0,0,0,.3);animation:pop .25s cubic-bezier(.2,1.4,.4,1)}.rpop span{font-size:26px;cursor:pointer;padding:2px 4px;border-radius:50%;transition:.15s}.rpop span:hover{transform:scale(1.4) translateY(-4px)}.rpop .more{font-size:18px;background:#eef2f7;width:34px;height:34px;display:grid;place-items:center;align-self:center}
 .rall{max-height:55vh;overflow:auto}.rall .cn{font-size:12px;color:var(--sm);font-weight:600;margin:8px 0 2px}.rall span{display:inline-block;font-size:26px;cursor:pointer;padding:3px;border-radius:6px;transition:.15s}.rall span:hover{background:#eef2f7;transform:scale(1.25)}
 @media(max-width:800px){#sb{transform:translateX(-100%)}#sb.open{transform:none}#mn{margin:0}.top{display:block}.chat{grid-template-columns:1fr}main{padding:14px}#ch small{max-width:40vw}}
-</style></head><body><div id="app"></div>
+</style><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+</head><body><div id="app"></div>
 <script src="elearning-data.js"></script>
 <script>
 const $=s=>document.querySelector(s),app=$('#app');
@@ -457,4 +458,15 @@ function render(){clearInterval(T);db=load()||db;const u=U();S.last='';
  if(S.page=='qz'){tick();T=setInterval(tick,1000)}}
 window.addEventListener('storage',()=>{if(S.page!='chat'&&!document.querySelector('.modal')&&S.page!='qz'&&U()&&!/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||'')){render()}});
 render();
-</script></body></html>
+</script><script>
+// ===== Skrin penuh automatik (pelayar hanya benarkan selepas sentuhan/klik pertama) =====
+(()=>{const d=document,r=d.documentElement,rq=r.requestFullscreen||r.webkitRequestFullscreen,ex=d.exitFullscreen||d.webkitExitFullscreen;if(!rq)return;
+ const on=()=>!!(d.fullscreenElement||d.webkitFullscreenElement);
+ const enter=()=>{if(on())return;try{const p=rq.call(r);p&&p.catch&&p.catch(()=>{})}catch{}};
+ const first=()=>{enter();removeEventListener('pointerdown',first,true);removeEventListener('keydown',first,true)};
+ addEventListener('pointerdown',first,true);addEventListener('keydown',first,true);
+ const b=d.createElement('button');b.type='button';b.title='Skrin penuh';b.textContent='⛶';
+ b.style.cssText='position:fixed;top:8px;right:8px;z-index:99;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;opacity:.75';
+ b.onclick=e=>{e.stopPropagation();on()?ex.call(d):enter()};d.body.appendChild(b)})();
+</script>
+</body></html>
